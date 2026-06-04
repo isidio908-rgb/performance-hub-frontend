@@ -18,22 +18,15 @@ interface Props {
   loading?: boolean;
 }
 
-export function DeleteClientDialog({
-  client,
-  open,
-  onOpenChange,
-  onConfirm,
-  loading,
-}: Props) {
+export function DeleteClientDialog({ client, open, onOpenChange, onConfirm, loading }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir{" "}
-            <strong>{client?.name}</strong>? Esta ação não pode ser desfeita e
-            pode remover projetos associados.
+            Tem certeza que deseja excluir <strong>{client?.name}</strong>? Esta ação não pode ser
+            desfeita e pode remover projetos associados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

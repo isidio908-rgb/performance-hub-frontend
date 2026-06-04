@@ -64,13 +64,9 @@ export function EventsTable({ events }: { events: AnalyticsEvent[] }) {
                 <EventTypeBadge type={String(e.type)} />
               </TableCell>
               <TableCell className="max-w-[280px]">
-                <div className="truncate text-sm">
-                  {e.name || e.currentUrl || "—"}
-                </div>
+                <div className="truncate text-sm">{e.name || e.currentUrl || "—"}</div>
                 {e.currentUrl && e.name && (
-                  <div className="truncate text-xs text-muted-foreground">
-                    {e.currentUrl}
-                  </div>
+                  <div className="truncate text-xs text-muted-foreground">{e.currentUrl}</div>
                 )}
               </TableCell>
               <TableCell>
@@ -80,9 +76,7 @@ export function EventsTable({ events }: { events: AnalyticsEvent[] }) {
                 <CopyCell value={e.sessionId} />
               </TableCell>
               <TableCell className="text-xs text-muted-foreground">
-                {[e.utmSource, e.utmMedium, e.utmCampaign]
-                  .filter(Boolean)
-                  .join(" / ") || "—"}
+                {[e.utmSource, e.utmMedium, e.utmCampaign].filter(Boolean).join(" / ") || "—"}
               </TableCell>
               <TableCell className="whitespace-nowrap text-right text-xs text-muted-foreground">
                 {formatDateTime(e.createdAt)}

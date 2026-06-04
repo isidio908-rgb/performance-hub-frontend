@@ -3,13 +3,7 @@ import { useMemo, useState } from "react";
 import { Copy, Check, Globe, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
@@ -28,15 +22,10 @@ function InstallPage() {
   const { projects, projectsQuery } = useProjects();
   const [copied, setCopied] = useState(false);
 
-  const project = useMemo(
-    () => projects.find((p) => p.id === projectId),
-    [projects, projectId],
-  );
+  const project = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId]);
 
   const trackerUrl = getTrackerScriptUrl();
-  const script = project?.trackingKey
-    ? buildTrackerScript(project.trackingKey)
-    : null;
+  const script = project?.trackingKey ? buildTrackerScript(project.trackingKey) : null;
 
   async function copy() {
     if (!script) return;
@@ -72,9 +61,7 @@ function InstallPage() {
       ) : !project && !projectsQuery.isLoading ? (
         <Alert>
           <AlertTitle>Projeto não encontrado</AlertTitle>
-          <AlertDescription>
-            O projeto selecionado não foi retornado pela API.
-          </AlertDescription>
+          <AlertDescription>O projeto selecionado não foi retornado pela API.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -101,7 +88,8 @@ function InstallPage() {
         <Alert variant="destructive">
           <AlertTitle>Sem tracking key</AlertTitle>
           <AlertDescription>
-            Este projeto ainda não possui <code>trackingKey</code>. Gere uma no backend antes de instalar.
+            Este projeto ainda não possui <code>trackingKey</code>. Gere uma no backend antes de
+            instalar.
           </AlertDescription>
         </Alert>
       )}
@@ -132,17 +120,27 @@ function InstallPage() {
 
             <TabsContent value="gtm" className="space-y-3">
               <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>No GTM, crie uma <strong>Tag</strong> do tipo <em>HTML Customizado</em>.</li>
+                <li>
+                  No GTM, crie uma <strong>Tag</strong> do tipo <em>HTML Customizado</em>.
+                </li>
                 <li>Cole o script abaixo no conteúdo da tag.</li>
-                <li>Defina o acionador como <em>All Pages</em> e publique o container.</li>
+                <li>
+                  Defina o acionador como <em>All Pages</em> e publique o container.
+                </li>
               </ol>
               <ScriptBlock script={script} />
             </TabsContent>
 
             <TabsContent value="shopify" className="space-y-3">
               <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Admin Shopify → <strong>Loja online</strong> → <strong>Temas</strong> → <em>Editar código</em>.</li>
-                <li>Abra <code>theme.liquid</code> e cole o script antes de <code>&lt;/head&gt;</code>.</li>
+                <li>
+                  Admin Shopify → <strong>Loja online</strong> → <strong>Temas</strong> →{" "}
+                  <em>Editar código</em>.
+                </li>
+                <li>
+                  Abra <code>theme.liquid</code> e cole o script antes de <code>&lt;/head&gt;</code>
+                  .
+                </li>
                 <li>Salve. O script começará a coletar eventos automaticamente.</li>
               </ol>
               <ScriptBlock script={script} />
@@ -150,8 +148,12 @@ function InstallPage() {
 
             <TabsContent value="woo" className="space-y-3">
               <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Instale um plugin de injeção de scripts (ex.: <em>WPCode</em>).</li>
-                <li>Crie um snippet do tipo <strong>Header</strong> e cole o script.</li>
+                <li>
+                  Instale um plugin de injeção de scripts (ex.: <em>WPCode</em>).
+                </li>
+                <li>
+                  Crie um snippet do tipo <strong>Header</strong> e cole o script.
+                </li>
                 <li>Ative o snippet em todo o site.</li>
               </ol>
               <ScriptBlock script={script} />
@@ -161,11 +163,7 @@ function InstallPage() {
           {script && (
             <div className="mt-4">
               <Button onClick={copy} size="sm">
-                {copied ? (
-                  <Check className="mr-2 h-4 w-4" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
+                {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                 Copiar script
               </Button>
             </div>

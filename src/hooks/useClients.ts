@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients";
-import type {
-  Client,
-  CreateClientInput,
-  UpdateClientInput,
-} from "@/types";
+import type { Client, CreateClientInput, UpdateClientInput } from "@/types";
 
 function normalize(res: Client[] | { data: Client[] } | undefined): Client[] {
   if (!res) return [];

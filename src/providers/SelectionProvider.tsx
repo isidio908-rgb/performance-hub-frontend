@@ -18,9 +18,7 @@ interface SelectionContextValue {
   setProjectId: (id: string | null) => void;
 }
 
-const SelectionContext = createContext<SelectionContextValue | undefined>(
-  undefined,
-);
+const SelectionContext = createContext<SelectionContextValue | undefined>(undefined);
 
 export function SelectionProvider({ children }: { children: ReactNode }) {
   const [clientId, setClientIdState] = useState<string | null>(null);
@@ -51,11 +49,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
     [clientId, projectId, setClientId, setProjectId],
   );
 
-  return (
-    <SelectionContext.Provider value={value}>
-      {children}
-    </SelectionContext.Provider>
-  );
+  return <SelectionContext.Provider value={value}>{children}</SelectionContext.Provider>;
 }
 
 export function useSelection() {

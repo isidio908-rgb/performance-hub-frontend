@@ -1,12 +1,7 @@
 // Centralized API client. Swap VITE_API_BASE_URL to point at a new backend
 // without touching any component.
 
-import {
-  getApiBaseUrl,
-  hasMixedContentRisk,
-  isHttpApi,
-  isHttpsPage,
-} from "@/utils/runtime";
+import { getApiBaseUrl, hasMixedContentRisk, isHttpApi, isHttpsPage } from "@/utils/runtime";
 
 const TOKEN_KEY = "vps_access_token";
 const REFRESH_KEY = "vps_refresh_token";
@@ -26,6 +21,10 @@ export const tokenStorage = {
     localStorage.setItem(REFRESH_KEY, refresh);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   },
+  setTokens(access: string, refresh: string) {
+    localStorage.setItem(TOKEN_KEY, access);
+    if (refresh) localStorage.setItem(REFRESH_KEY, refresh);
+  },
   clear() {
     if (typeof window === "undefined") return;
     localStorage.removeItem(TOKEN_KEY);
@@ -39,11 +38,7 @@ export const tokenStorage = {
   },
 };
 
-export type ApiErrorKind =
-  | "missing_base_url"
-  | "mixed_content"
-  | "network"
-  | "http";
+export type ApiErrorKind = "missing_base_url" | "mixed_content" | "network" | "http";
 
 export class ApiError extends Error {
   public kind: ApiErrorKind;
@@ -62,6 +57,7 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   auth?: boolean;
   query?: Record<string, string | number | boolean | undefined | null>;
+  _retried?: boolean;
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]) {
@@ -75,9 +71,59 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
   return url.toString();
 }
 
+/**
+ * Single-flight refresh promise. Garantia de que múltiplos 401 simultâneos
+ * fazem APENAS uma chamada a /auth/refresh.
+ */
+let refreshPromise: Promise<string | null> | null = null;
+
+async function performRefresh(): Promise<string | null> {
+  const refresh = tokenStorage.refresh;
+  if (!refresh) return null;
+
+  const base = getApiBaseUrl();
+  if (!base || hasMixedContentRisk(base)) return null;
+
+  try {
+    const res = await fetch(`${base}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken: refresh }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      accessToken?: string;
+      refreshToken?: string;
+      user?: unknown;
+    };
+    if (!data?.accessToken) return null;
+    const newRefresh = data.refreshToken ?? refresh;
+    if (data.user) {
+      tokenStorage.setSession(data.accessToken, newRefresh, data.user);
+    } else {
+      tokenStorage.setTokens(data.accessToken, newRefresh);
+    }
+    return data.accessToken;
+  } catch {
+    return null;
+  }
+}
+
+async function getFreshAccessToken(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = performRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 export async function apiRequest<T = unknown>(
   path: string,
-  { body, auth = true, query, headers, ...rest }: RequestOptions = {},
+  { body, auth = true, query, headers, _retried, ...rest }: RequestOptions = {},
 ): Promise<T> {
   const base = getApiBaseUrl();
 
@@ -118,12 +164,7 @@ export async function apiRequest<T = unknown>(
     response = await fetch(buildUrl(path, query), {
       ...rest,
       headers: finalHeaders,
-      body:
-        body === undefined
-          ? undefined
-          : body instanceof FormData
-            ? body
-            : JSON.stringify(body),
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     });
   } catch (err) {
     throw new ApiError(
@@ -141,8 +182,23 @@ export async function apiRequest<T = unknown>(
     const msg =
       (data && typeof data === "object" && "message" in data
         ? String((data as { message: unknown }).message)
-        : undefined) ?? response.statusText ?? "Erro na requisição";
-    if (response.status === 401 && auth) {
+        : undefined) ??
+      response.statusText ??
+      "Erro na requisição";
+    if (response.status === 401 && auth && !_retried && tokenStorage.refresh) {
+      const newToken = await getFreshAccessToken();
+      if (newToken) {
+        return apiRequest<T>(path, {
+          body,
+          auth,
+          query,
+          headers,
+          _retried: true,
+          ...rest,
+        });
+      }
+      tokenStorage.clear();
+    } else if (response.status === 401 && auth) {
       tokenStorage.clear();
     }
     throw new ApiError(response.status, msg, data, "http");
@@ -160,8 +216,7 @@ function safeJson(text: string): unknown {
 }
 
 export const api = {
-  get: <T>(path: string, opts?: RequestOptions) =>
-    apiRequest<T>(path, { ...opts, method: "GET" }),
+  get: <T>(path: string, opts?: RequestOptions) => apiRequest<T>(path, { ...opts, method: "GET" }),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
     apiRequest<T>(path, { ...opts, method: "POST", body }),
   put: <T>(path: string, body?: unknown, opts?: RequestOptions) =>

@@ -26,8 +26,7 @@ export const Route = createFileRoute("/_authenticated/clients")({
 
 function ClientsPage() {
   const { clientId, setClientId, setProjectId } = useSelection();
-  const { clientsQuery, clients, createClient, updateClient, deleteClient } =
-    useClients();
+  const { clientsQuery, clients, createClient, updateClient, deleteClient } = useClients();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
@@ -43,9 +42,7 @@ function ClientsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie os clientes e seus projetos.
-          </p>
+          <p className="text-sm text-muted-foreground">Gerencie os clientes e seus projetos.</p>
         </div>
         <Button onClick={onCreate}>
           <Plus className="mr-2 h-4 w-4" /> Novo cliente
@@ -165,12 +162,8 @@ function ErrorCard({ onRetry }: { onRetry: () => void }) {
   return (
     <Card className="border-destructive/40">
       <CardHeader>
-        <CardTitle className="text-base text-destructive">
-          Erro ao carregar clientes
-        </CardTitle>
-        <CardDescription>
-          Verifique a conexão com a API e tente novamente.
-        </CardDescription>
+        <CardTitle className="text-base text-destructive">Erro ao carregar clientes</CardTitle>
+        <CardDescription>Verifique a conexão com a API e tente novamente.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button variant="outline" onClick={onRetry}>

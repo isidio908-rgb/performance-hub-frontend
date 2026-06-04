@@ -26,12 +26,7 @@ interface Props {
   onSearchChange: (v: string) => void;
 }
 
-export function EventsFilters({
-  type,
-  search,
-  onTypeChange,
-  onSearchChange,
-}: Props) {
+export function EventsFilters({ type, search, onTypeChange, onSearchChange }: Props) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <div className="relative flex-1">

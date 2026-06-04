@@ -25,20 +25,14 @@ export function ClientProjectSelector() {
     queryKey: ["clients"],
     queryFn: () => clientsApi.list(),
   });
-  const clients = useMemo(
-    () => normalize<Client>(clientsQuery.data),
-    [clientsQuery.data],
-  );
+  const clients = useMemo(() => normalize<Client>(clientsQuery.data), [clientsQuery.data]);
 
   // Backend atual NÃO filtra por clientId: buscamos todos e filtramos aqui.
   const projectsQuery = useQuery({
     queryKey: ["projects"],
     queryFn: () => projectsApi.list(),
   });
-  const allProjects = useMemo(
-    () => normalize<Project>(projectsQuery.data),
-    [projectsQuery.data],
-  );
+  const allProjects = useMemo(() => normalize<Project>(projectsQuery.data), [projectsQuery.data]);
   const projects = useMemo(
     () => (clientId ? allProjects.filter((p) => p.clientId === clientId) : []),
     [allProjects, clientId],
@@ -71,11 +65,7 @@ export function ClientProjectSelector() {
         <SelectTrigger className="h-9 w-[180px]">
           <SelectValue
             placeholder={
-              clientsQuery.isLoading
-                ? "Carregando..."
-                : clientsQuery.isError
-                  ? "Erro"
-                  : "Cliente"
+              clientsQuery.isLoading ? "Carregando..." : clientsQuery.isError ? "Erro" : "Cliente"
             }
           />
         </SelectTrigger>
@@ -86,9 +76,7 @@ export function ClientProjectSelector() {
             </SelectItem>
           ))}
           {clients.length === 0 && !clientsQuery.isLoading && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              Nenhum cliente
-            </div>
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum cliente</div>
           )}
         </SelectContent>
       </Select>
@@ -99,9 +87,7 @@ export function ClientProjectSelector() {
         disabled={!clientId || projectsQuery.isLoading}
       >
         <SelectTrigger className="h-9 w-[200px]">
-          <SelectValue
-            placeholder={projectsQuery.isLoading ? "Carregando..." : "Projeto"}
-          />
+          <SelectValue placeholder={projectsQuery.isLoading ? "Carregando..." : "Projeto"} />
         </SelectTrigger>
         <SelectContent>
           {projects.map((p) => (
@@ -110,9 +96,7 @@ export function ClientProjectSelector() {
             </SelectItem>
           ))}
           {projects.length === 0 && clientId && !projectsQuery.isLoading && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              Nenhum projeto
-            </div>
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum projeto</div>
           )}
         </SelectContent>
       </Select>

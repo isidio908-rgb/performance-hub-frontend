@@ -1,9 +1,5 @@
 import { api } from "./client";
-import type {
-  Project,
-  CreateProjectInput,
-  UpdateProjectInput,
-} from "@/types";
+import type { Project, CreateProjectInput, UpdateProjectInput } from "@/types";
 
 type ListResponse = Project[] | { data: Project[] };
 
@@ -13,7 +9,6 @@ export const projectsApi = {
   list: () => api.get<ListResponse>("/projects"),
   get: (id: string) => api.get<Project | { data: Project }>(`/projects/${id}`),
   create: (input: CreateProjectInput) => api.post<Project>("/projects", input),
-  update: (id: string, input: UpdateProjectInput) =>
-    api.patch<Project>(`/projects/${id}`, input),
+  update: (id: string, input: UpdateProjectInput) => api.patch<Project>(`/projects/${id}`, input),
   remove: (id: string) => api.delete<void>(`/projects/${id}`),
 };

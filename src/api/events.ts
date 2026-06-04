@@ -7,8 +7,7 @@ type ListResponse =
   | { data: AnalyticsEvent[]; meta?: unknown };
 
 export const eventsApi = {
-  list: (projectId: string) =>
-    api.get<ListResponse>("/analytics/events", { query: { projectId } }),
+  list: (projectId: string) => api.get<ListResponse>("/analytics/events", { query: { projectId } }),
 };
 
 export function normalizeEvents(res: ListResponse | undefined): AnalyticsEvent[] {

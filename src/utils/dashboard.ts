@@ -8,9 +8,7 @@ export function normalizeDashboardKpis(raw: unknown): DashboardKpis {
   if (!raw || typeof raw !== "object") return {};
   const root = raw as Record<string, unknown>;
   const src =
-    root.data && typeof root.data === "object"
-      ? (root.data as Record<string, unknown>)
-      : root;
+    root.data && typeof root.data === "object" ? (root.data as Record<string, unknown>) : root;
 
   const num = (...keys: string[]): number | undefined => {
     for (const k of keys) {

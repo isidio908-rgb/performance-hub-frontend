@@ -27,8 +27,7 @@ function formatDate(iso?: string) {
 }
 
 export function ClientCard({ client, selected, onSelect, onEdit, onDelete }: Props) {
-  const projectsCount =
-    client._count?.projects ?? client.projectsCount ?? undefined;
+  const projectsCount = client._count?.projects ?? client.projectsCount ?? undefined;
   const created = formatDate(client.createdAt);
 
   return (
@@ -50,9 +49,7 @@ export function ClientCard({ client, selected, onSelect, onEdit, onDelete }: Pro
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{client.name}</p>
               {client.document && (
-                <p className="truncate text-xs text-muted-foreground">
-                  {client.document}
-                </p>
+                <p className="truncate text-xs text-muted-foreground">{client.document}</p>
               )}
             </div>
           </button>
@@ -78,9 +75,7 @@ export function ClientCard({ client, selected, onSelect, onEdit, onDelete }: Pro
           </DropdownMenu>
         </div>
         {client.notes && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {client.notes}
-          </p>
+          <p className="line-clamp-2 text-xs text-muted-foreground">{client.notes}</p>
         )}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">

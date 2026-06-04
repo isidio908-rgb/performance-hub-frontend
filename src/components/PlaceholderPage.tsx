@@ -11,9 +11,7 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       <Card className="border-dashed">
         <CardHeader className="flex flex-row items-center gap-3">
@@ -28,8 +26,8 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
           </div>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          O shell, autenticação e contexto Cliente/Projeto já estão prontos.
-          Esta página é apenas um placeholder navegável.
+          O shell, autenticação e contexto Cliente/Projeto já estão prontos. Esta página é apenas um
+          placeholder navegável.
         </CardContent>
       </Card>
     </div>

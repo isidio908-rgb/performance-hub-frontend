@@ -35,17 +35,9 @@ export const Route = createFileRoute("/_authenticated/projects")({
 function ProjectsPage() {
   const { clientId, setClientId, projectId, setProjectId } = useSelection();
   const { clients } = useClients();
-  const {
-    projectsQuery,
-    projects,
-    createProject,
-    updateProject,
-    deleteProject,
-  } = useProjects();
+  const { projectsQuery, projects, createProject, updateProject, deleteProject } = useProjects();
 
-  const [filterClientId, setFilterClientId] = useState<string>(
-    clientId ?? "__all",
-  );
+  const [filterClientId, setFilterClientId] = useState<string>(clientId ?? "__all");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState<Project | null>(null);
@@ -106,10 +98,7 @@ function ProjectsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          hasClients={clients.length > 0}
-          onCreate={onCreate}
-        />
+        <EmptyState hasClients={clients.length > 0} onCreate={onCreate} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
@@ -135,9 +124,7 @@ function ProjectsPage() {
                   });
                   toast.success(`Status atualizado para ${status}`);
                 } catch (err) {
-                  toast.error(
-                    err instanceof Error ? err.message : "Falha ao atualizar",
-                  );
+                  toast.error(err instanceof Error ? err.message : "Falha ao atualizar");
                 }
               }}
             />
@@ -148,9 +135,7 @@ function ProjectsPage() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editing ? "Editar projeto" : "Novo projeto"}
-            </DialogTitle>
+            <DialogTitle>{editing ? "Editar projeto" : "Novo projeto"}</DialogTitle>
             <DialogDescription>
               {editing
                 ? "Atualize os dados do projeto."
@@ -159,9 +144,7 @@ function ProjectsPage() {
           </DialogHeader>
           <ProjectForm
             clients={clients}
-            defaultClientId={
-              filterClientId !== "__all" ? filterClientId : clientId
-            }
+            defaultClientId={filterClientId !== "__all" ? filterClientId : clientId}
             initial={editing ?? undefined}
             submitting={createProject.isPending || updateProject.isPending}
             onCancel={() => setFormOpen(false)}
@@ -180,9 +163,7 @@ function ProjectsPage() {
                 }
                 setFormOpen(false);
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Falha ao salvar",
-                );
+                toast.error(err instanceof Error ? err.message : "Falha ao salvar");
               }
             }}
           />
@@ -202,9 +183,7 @@ function ProjectsPage() {
             if (projectId === deleting.id) setProjectId(null);
             setDeleting(null);
           } catch (err) {
-            toast.error(
-              err instanceof Error ? err.message : "Falha ao excluir",
-            );
+            toast.error(err instanceof Error ? err.message : "Falha ao excluir");
           }
         }}
       />
@@ -212,13 +191,7 @@ function ProjectsPage() {
   );
 }
 
-function EmptyState({
-  hasClients,
-  onCreate,
-}: {
-  hasClients: boolean;
-  onCreate: () => void;
-}) {
+function EmptyState({ hasClients, onCreate }: { hasClients: boolean; onCreate: () => void }) {
   return (
     <Card className="border-dashed">
       <CardHeader>

@@ -1,13 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useSelection } from "@/providers/SelectionProvider";
 import { useEvents } from "@/hooks/useEvents";
-import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 import { EventsFilters } from "@/components/events/EventsFilters";
 import { EventsTable } from "@/components/events/EventsTable";
+import {
+  applyDateRange,
+  DateRangeFilter,
+  type DateRange,
+} from "@/components/filters/DateRangeFilter";
+import { EmptyState } from "@/components/states/EmptyState";
+import { ErrorState } from "@/components/states/ErrorState";
+import { LoadingTable } from "@/components/states/LoadingCards";
+import { Activity } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/events")({
   component: EventsPage,
@@ -19,9 +25,14 @@ function EventsPage() {
 
   const [typeFilter, setTypeFilter] = useState<string>("__all");
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: null,
+    to: null,
+  });
 
   const filtered = useMemo(() => {
-    return events.filter((e) => {
+    const list = applyDateRange(events, dateRange);
+    return list.filter((e) => {
       if (typeFilter !== "__all" && String(e.type) !== typeFilter) return false;
       if (search.trim()) {
         const q = search.trim().toLowerCase();
@@ -33,52 +44,57 @@ function EventsPage() {
       }
       return true;
     });
-  }, [events, typeFilter, search]);
+  }, [events, typeFilter, search, dateRange]);
 
   return (
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Eventos</h1>
-        <p className="text-sm text-muted-foreground">
-          Últimas atividades capturadas pelo tracker.
-        </p>
+        <p className="text-sm text-muted-foreground">Últimas atividades capturadas pelo tracker.</p>
       </div>
 
       {!clientId || !projectId ? (
-        <EmptySelection />
+        <EmptyState
+          title="Selecione um projeto"
+          description="Use o seletor no topo para escolher cliente e projeto."
+        />
       ) : (
         <>
-          {query.isError && <ApiEnvironmentAlert error={query.error} />}
-
-          <EventsFilters
-            type={typeFilter}
-            search={search}
-            onTypeChange={setTypeFilter}
-            onSearchChange={setSearch}
-          />
+          <div className="space-y-3">
+            <EventsFilters
+              type={typeFilter}
+              search={search}
+              onTypeChange={setTypeFilter}
+              onSearchChange={setSearch}
+            />
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          </div>
 
           {query.isLoading ? (
-            <Skeleton className="h-72 w-full rounded-md" />
+            <LoadingTable />
           ) : query.isError ? (
-            <ErrorCard onRetry={() => query.refetch()} />
+            <ErrorState
+              title="Erro ao carregar eventos"
+              error={query.error}
+              onRetry={() => query.refetch()}
+            />
           ) : filtered.length === 0 ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle className="text-base">Nenhum evento</CardTitle>
-                <CardDescription>
-                  {events.length === 0
-                    ? "Este projeto ainda não recebeu eventos. Instale o script para começar."
-                    : "Nenhum evento corresponde aos filtros atuais."}
-                </CardDescription>
-              </CardHeader>
-              {events.length === 0 && (
-                <CardContent>
+            <EmptyState
+              icon={Activity}
+              title="Nenhum evento"
+              description={
+                events.length === 0
+                  ? "Este projeto ainda não recebeu eventos. Instale o script para começar."
+                  : "Nenhum evento corresponde aos filtros atuais."
+              }
+              action={
+                events.length === 0 ? (
                   <Button asChild size="sm">
                     <Link to="/install">Instalar tracking</Link>
                   </Button>
-                </CardContent>
-              )}
-            </Card>
+                ) : undefined
+              }
+            />
           ) : (
             <>
               <p className="text-xs text-muted-foreground">
@@ -90,38 +106,5 @@ function EventsPage() {
         </>
       )}
     </div>
-  );
-}
-
-function EmptySelection() {
-  return (
-    <Card className="border-dashed">
-      <CardHeader>
-        <CardTitle className="text-base">Selecione um projeto</CardTitle>
-        <CardDescription>
-          Use o seletor no topo para escolher cliente e projeto.
-        </CardDescription>
-      </CardHeader>
-    </Card>
-  );
-}
-
-function ErrorCard({ onRetry }: { onRetry: () => void }) {
-  return (
-    <Card className="border-destructive/40">
-      <CardHeader>
-        <CardTitle className="text-base text-destructive">
-          Erro ao carregar eventos
-        </CardTitle>
-        <CardDescription>
-          Verifique a conexão com a API e tente novamente.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          Tentar novamente
-        </Button>
-      </CardContent>
-    </Card>
   );
 }

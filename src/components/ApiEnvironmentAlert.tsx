@@ -25,8 +25,7 @@ export function ApiEnvironmentAlert({ error, variant, className }: Props) {
     else if (env.mixedContent) resolved = "mixed_content";
     else if (error instanceof ApiError && error.kind === "mixed_content")
       resolved = "mixed_content";
-    else if (error instanceof ApiError && error.kind === "missing_base_url")
-      resolved = "missing";
+    else if (error instanceof ApiError && error.kind === "missing_base_url") resolved = "missing";
     else if (error instanceof ApiError && (error.kind === "network" || error.status === 0))
       resolved = "unreachable";
   }
