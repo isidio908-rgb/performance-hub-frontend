@@ -35,8 +35,8 @@ function DashboardPage() {
   const { projectId, clientId } = useSelection();
 
   const kpisQuery = useQuery({
-    queryKey: ["dashboard", "kpis", projectId],
-    queryFn: () => dashboardApi.kpis(projectId!),
+    queryKey: ["analytics", "overview", projectId],
+    queryFn: () => dashboardApi.overview(projectId!),
     enabled: !!projectId,
     retry: 1,
   });
