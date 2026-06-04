@@ -10,12 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import type {
-  AttributionModel,
-  Client,
-  CreateProjectInput,
-  Project,
-} from "@/types";
+import type { AttributionModel, Client, CreateProjectInput, Project } from "@/types";
 
 const ATTRIBUTION_OPTIONS: { value: AttributionModel; label: string }[] = [
   { value: "FIRST_TOUCH", label: "First touch" },
@@ -42,9 +37,7 @@ export function ProjectForm({
   onSubmit,
   onCancel,
 }: Props) {
-  const [clientId, setClientId] = useState(
-    initial?.clientId ?? defaultClientId ?? "",
-  );
+  const [clientId, setClientId] = useState(initial?.clientId ?? defaultClientId ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [domain, setDomain] = useState(initial?.domain ?? "");
   const [attribution, setAttribution] = useState<AttributionModel | "">(
@@ -83,11 +76,7 @@ export function ProjectForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label>Cliente *</Label>
-        <Select
-          value={clientId}
-          onValueChange={(v) => setClientId(v)}
-          disabled={!!initial}
-        >
+        <Select value={clientId} onValueChange={(v) => setClientId(v)} disabled={!!initial}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione um cliente" />
           </SelectTrigger>
@@ -130,10 +119,7 @@ export function ProjectForm({
 
       <div className="space-y-2">
         <Label>Modelo de atribuição</Label>
-        <Select
-          value={attribution}
-          onValueChange={(v) => setAttribution(v as AttributionModel)}
-        >
+        <Select value={attribution} onValueChange={(v) => setAttribution(v as AttributionModel)}>
           <SelectTrigger>
             <SelectValue placeholder="Padrão do backend" />
           </SelectTrigger>

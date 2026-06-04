@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectsApi } from "@/api/projects";
-import type {
-  Project,
-  CreateProjectInput,
-  UpdateProjectInput,
-} from "@/types";
+import type { Project, CreateProjectInput, UpdateProjectInput } from "@/types";
 
 function normalize(res: Project[] | { data: Project[] } | undefined): Project[] {
   if (!res) return [];
@@ -21,10 +17,7 @@ export function useProjects() {
     queryFn: () => projectsApi.list(),
   });
 
-  const projects = useMemo(
-    () => normalize(projectsQuery.data),
-    [projectsQuery.data],
-  );
+  const projects = useMemo(() => normalize(projectsQuery.data), [projectsQuery.data]);
 
   const getProjectsByClient = (clientId: string | null | undefined) =>
     clientId ? projects.filter((p) => p.clientId === clientId) : [];

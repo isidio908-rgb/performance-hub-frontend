@@ -62,16 +62,10 @@ export function ProjectCard({
     >
       <CardContent className="flex flex-col gap-3 p-4">
         <div className="flex items-start justify-between gap-2">
-          <button
-            type="button"
-            onClick={onSelect}
-            className="min-w-0 flex-1 text-left"
-          >
+          <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
             <p className="truncate text-sm font-semibold">{project.name}</p>
             {project.client?.name && (
-              <p className="truncate text-xs text-muted-foreground">
-                {project.client.name}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{project.client.name}</p>
             )}
           </button>
           <div className="flex items-center gap-1">

@@ -127,3 +127,49 @@ export interface AnalyticsEvent {
   os?: string | null;
   createdAt?: string;
 }
+
+export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "WON" | "LOST" | string;
+
+export interface Lead {
+  id: string;
+  projectId?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  source?: string | null;
+  status?: LeadStatus | null;
+  visitorId?: string | null;
+  sessionId?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  createdAt?: string;
+  [k: string]: unknown;
+}
+
+export interface PurchaseItem {
+  id?: string;
+  name?: string;
+  quantity?: number;
+  price?: number;
+}
+
+export interface Purchase {
+  id: string;
+  projectId?: string;
+  orderId?: string | null;
+  visitorId?: string | null;
+  sessionId?: string | null;
+  customerEmail?: string | null;
+  customerName?: string | null;
+  total?: number | null;
+  amount?: number | null;
+  currency?: string | null;
+  items?: PurchaseItem[];
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  status?: string | null;
+  createdAt?: string;
+  [k: string]: unknown;
+}
