@@ -28,6 +28,7 @@ export interface Project {
   createdAt?: string;
 }
 
+// Forma normalizada usada pela UI. Backend pode retornar variações.
 export interface DashboardKpis {
   pageViews?: number;
   events?: number;
@@ -39,5 +40,6 @@ export interface DashboardKpis {
   purchases?: number;
   revenue?: number;
   averageTicket?: number;
+  conversionRate?: number;
   [k: string]: number | undefined;
 }

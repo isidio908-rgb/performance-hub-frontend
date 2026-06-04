@@ -30,35 +30,53 @@ export function ClientProjectSelector() {
     [clientsQuery.data],
   );
 
+  // Backend atual NÃO filtra por clientId: buscamos todos e filtramos aqui.
   const projectsQuery = useQuery({
-    queryKey: ["projects", clientId],
-    queryFn: () => projectsApi.list(clientId ?? undefined),
-    enabled: !!clientId,
+    queryKey: ["projects"],
+    queryFn: () => projectsApi.list(),
   });
-  const projects = useMemo(
+  const allProjects = useMemo(
     () => normalize<Project>(projectsQuery.data),
     [projectsQuery.data],
   );
+  const projects = useMemo(
+    () => (clientId ? allProjects.filter((p) => p.clientId === clientId) : []),
+    [allProjects, clientId],
+  );
 
-  // Auto-select first client/project when data loads and nothing selected.
+  // Auto-seleciona primeiro cliente disponível.
   useEffect(() => {
     if (!clientId && clients[0]) setClientId(clients[0].id);
   }, [clientId, clients, setClientId]);
 
+  // Auto-seleciona primeiro projeto válido para o cliente atual.
+  // Se o projeto persistido não pertence ao cliente atual, reseta.
   useEffect(() => {
-    if (clientId && !projectId && projects[0]) setProjectId(projects[0].id);
-  }, [clientId, projectId, projects, setProjectId]);
+    if (!clientId) return;
+    if (projectsQuery.isLoading) return;
+    if (projectId && projects.some((p) => p.id === projectId)) return;
+    setProjectId(projects[0]?.id ?? null);
+  }, [clientId, projectId, projects, projectsQuery.isLoading, setProjectId]);
 
   return (
     <div className="flex items-center gap-2">
       <Select
         value={clientId ?? undefined}
-        onValueChange={(v) => setClientId(v)}
+        onValueChange={(v) => {
+          setClientId(v);
+          setProjectId(null); // limpar projeto ao trocar cliente
+        }}
         disabled={clientsQuery.isLoading}
       >
         <SelectTrigger className="h-9 w-[180px]">
           <SelectValue
-            placeholder={clientsQuery.isError ? "Erro ao carregar" : "Cliente"}
+            placeholder={
+              clientsQuery.isLoading
+                ? "Carregando..."
+                : clientsQuery.isError
+                  ? "Erro"
+                  : "Cliente"
+            }
           />
         </SelectTrigger>
         <SelectContent>
@@ -81,7 +99,9 @@ export function ClientProjectSelector() {
         disabled={!clientId || projectsQuery.isLoading}
       >
         <SelectTrigger className="h-9 w-[200px]">
-          <SelectValue placeholder="Projeto" />
+          <SelectValue
+            placeholder={projectsQuery.isLoading ? "Carregando..." : "Projeto"}
+          />
         </SelectTrigger>
         <SelectContent>
           {projects.map((p) => (

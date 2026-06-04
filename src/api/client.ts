@@ -1,8 +1,12 @@
 // Centralized API client. Swap VITE_API_BASE_URL to point at a new backend
 // without touching any component.
 
-const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+import {
+  getApiBaseUrl,
+  hasMixedContentRisk,
+  isHttpApi,
+  isHttpsPage,
+} from "@/utils/runtime";
 
 const TOKEN_KEY = "vps_access_token";
 const REFRESH_KEY = "vps_refresh_token";
@@ -23,6 +27,7 @@ export const tokenStorage = {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   },
   clear() {
+    if (typeof window === "undefined") return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(USER_KEY);
@@ -34,9 +39,22 @@ export const tokenStorage = {
   },
 };
 
+export type ApiErrorKind =
+  | "missing_base_url"
+  | "mixed_content"
+  | "network"
+  | "http";
+
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public body?: unknown) {
+  public kind: ApiErrorKind;
+  constructor(
+    public status: number,
+    message: string,
+    public body?: unknown,
+    kind: ApiErrorKind = "http",
+  ) {
     super(message);
+    this.kind = kind;
   }
 }
 
@@ -47,29 +65,38 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]) {
-  const url = new URL(
-    `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`,
-    typeof window !== "undefined" ? window.location.origin : "http://localhost",
-  );
-  // If BASE_URL is absolute, URL ctor above already used it correctly when given an absolute string.
-  // Re-build cleanly when BASE_URL is absolute:
-  const finalUrl = BASE_URL.startsWith("http")
-    ? new URL(`${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`)
-    : url;
+  const base = getApiBaseUrl();
+  const url = new URL(`${base}${path.startsWith("/") ? path : `/${path}`}`);
   if (query) {
     for (const [k, v] of Object.entries(query)) {
-      if (v !== undefined && v !== null) finalUrl.searchParams.set(k, String(v));
+      if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     }
   }
-  return finalUrl.toString();
+  return url.toString();
 }
 
 export async function apiRequest<T = unknown>(
   path: string,
   { body, auth = true, query, headers, ...rest }: RequestOptions = {},
 ): Promise<T> {
-  if (!BASE_URL) {
-    throw new ApiError(0, "VITE_API_BASE_URL não configurada");
+  const base = getApiBaseUrl();
+
+  if (!base) {
+    throw new ApiError(
+      0,
+      "VITE_API_BASE_URL não configurada. Defina a URL HTTPS do backend no .env.",
+      undefined,
+      "missing_base_url",
+    );
+  }
+
+  if (hasMixedContentRisk(base)) {
+    throw new ApiError(
+      0,
+      "API em HTTP bloqueada pelo navegador. Configure VITE_API_BASE_URL com uma URL HTTPS ou use um proxy HTTPS para o backend.",
+      { baseUrl: base, httpsPage: isHttpsPage(), httpApi: isHttpApi(base) },
+      "mixed_content",
+    );
   }
 
   const finalHeaders: Record<string, string> = {
@@ -102,6 +129,8 @@ export async function apiRequest<T = unknown>(
     throw new ApiError(
       0,
       err instanceof Error ? err.message : "Falha de rede",
+      undefined,
+      "network",
     );
   }
 
@@ -116,7 +145,7 @@ export async function apiRequest<T = unknown>(
     if (response.status === 401 && auth) {
       tokenStorage.clear();
     }
-    throw new ApiError(response.status, msg, data);
+    throw new ApiError(response.status, msg, data, "http");
   }
 
   return data as T;

@@ -18,6 +18,7 @@ import { dashboardApi } from "@/api/dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/api/client";
+import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -35,8 +36,8 @@ function DashboardPage() {
   const { projectId, clientId } = useSelection();
 
   const kpisQuery = useQuery({
-    queryKey: ["dashboard", "kpis", projectId],
-    queryFn: () => dashboardApi.kpis(projectId!),
+    queryKey: ["analytics", "overview", projectId],
+    queryFn: () => dashboardApi.overview(projectId!),
     enabled: !!projectId,
     retry: 1,
   });
@@ -103,19 +104,20 @@ function EmptySelection() {
 function ErrorState({ error }: { error: unknown }) {
   const msg =
     error instanceof ApiError
-      ? error.status === 0
-        ? "Não foi possível conectar ao backend. Verifique se VITE_API_BASE_URL está acessível pelo navegador (HTTPS)."
-        : `${error.status} — ${error.message}`
+      ? `${error.status || ""} ${error.message}`.trim()
       : "Erro desconhecido ao carregar KPIs.";
   return (
-    <Card className="border-destructive/40">
-      <CardHeader>
-        <CardTitle className="text-base text-destructive">Erro ao carregar KPIs</CardTitle>
-        <CardDescription>{msg}</CardDescription>
-      </CardHeader>
-      <CardContent className="text-xs text-muted-foreground">
-        Esta página tentará novamente quando você trocar de projeto.
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <ApiEnvironmentAlert error={error} />
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="text-base text-destructive">Erro ao carregar KPIs</CardTitle>
+          <CardDescription>{msg}</CardDescription>
+        </CardHeader>
+        <CardContent className="text-xs text-muted-foreground">
+          Esta página tentará novamente quando você trocar de projeto.
+        </CardContent>
+      </Card>
+    </div>
   );
 }

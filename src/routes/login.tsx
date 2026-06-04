@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/providers/AuthProvider";
 import { ApiError } from "@/api/client";
+import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 import { Loader2 } from "lucide-react";
 
 interface LoginSearch {
@@ -57,8 +58,12 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/40 p-4">
-      <div className="w-full max-w-md">
+    <div
+      suppressHydrationWarning
+      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/40 p-4"
+    >
+      <div className="w-full max-w-md space-y-4">
+        <ApiEnvironmentAlert />
         <div className="mb-8 flex items-center justify-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
             P
