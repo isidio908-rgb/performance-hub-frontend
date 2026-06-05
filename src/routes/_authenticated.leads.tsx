@@ -8,11 +8,15 @@ import { usePersistedState } from "@/hooks/usePersistedState";
 import { LeadsFilters } from "@/components/leads/LeadsFilters";
 import { LeadsTable } from "@/components/leads/LeadsTable";
 import { TablePagination } from "@/components/table/TablePagination";
+import { DataTableShell } from "@/components/table/DataTableShell";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { TableDensityToggle } from "@/components/table/TableDensityToggle";
+import { useTableDensity } from "@/hooks/useTableDensity";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingTable } from "@/components/states/LoadingCards";
 import { applyDateRange, type DateRange } from "@/components/filters/DateRangeFilter";
 import { paginateClientSide } from "@/utils/pagination";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export const Route = createFileRoute("/_authenticated/leads")({
   component: LeadsPage,
@@ -36,6 +40,7 @@ const DEFAULT_STATE: LeadsUiState = {
 
 function LeadsPage() {
   const { projectId, clientId } = useSelection();
+  const { density } = useTableDensity();
   const [ui, setUi] = usePersistedState<LeadsUiState>("vps_filters_leads", DEFAULT_STATE);
 
   const { query, leads, meta, isServerPaginated } = useLeads(projectId, {
@@ -64,14 +69,26 @@ function LeadsPage() {
     return paginateClientSide(filtered, ui.page, ui.pageSize);
   }, [filtered, ui.page, ui.pageSize, isServerPaginated, meta]);
 
+  const activeFiltersCount =
+    (ui.status !== "__all" ? 1 : 0) +
+    (ui.search.trim() ? 1 : 0) +
+    (ui.dateRange.from || ui.dateRange.to ? 1 : 0);
+
+  const clearFilters = () =>
+    setUi((p) => ({
+      ...p,
+      status: "__all",
+      search: "",
+      dateRange: { from: null, to: null },
+      page: 1,
+    }));
+
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-        <p className="text-sm text-muted-foreground">
-          Conversões capturadas via formulário, WhatsApp e integrações.
-        </p>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Leads"
+        description="Conversões capturadas via formulário, WhatsApp e integrações."
+      />
 
       {!clientId || !projectId ? (
         <EmptyState
@@ -79,25 +96,37 @@ function LeadsPage() {
           description="Use o seletor no topo para escolher cliente e projeto."
         />
       ) : (
-        <>
-          <LeadsFilters
-            status={ui.status}
-            search={ui.search}
-            dateRange={ui.dateRange}
-            onStatusChange={(v) => setUi((p) => ({ ...p, status: v, page: 1 }))}
-            onSearchChange={(v) => setUi((p) => ({ ...p, search: v, page: 1 }))}
-            onDateRangeChange={(v) => setUi((p) => ({ ...p, dateRange: v, page: 1 }))}
-          />
-
-          {query.isLoading ? (
-            <LoadingTable />
-          ) : query.isError ? (
-            <ErrorState
-              title="Erro ao carregar leads"
-              error={query.error}
-              onRetry={() => query.refetch()}
-            />
-          ) : filtered.length === 0 ? (
+        <DataTableShell
+          toolbar={
+            <FilterBar
+              rightSlot={<TableDensityToggle />}
+              search={ui.search}
+              onSearchChange={(v) => setUi((p) => ({ ...p, search: v, page: 1 }))}
+              searchPlaceholder="Buscar lead por nome, email ou telefone…"
+              searchAriaLabel="Buscar leads"
+              activeFiltersCount={activeFiltersCount}
+              onClearFilters={clearFilters}
+            >
+              <LeadsFilters
+                status={ui.status}
+                dateRange={ui.dateRange}
+                onStatusChange={(v) => setUi((p) => ({ ...p, status: v, page: 1 }))}
+                onDateRangeChange={(v) => setUi((p) => ({ ...p, dateRange: v, page: 1 }))}
+              />
+            </FilterBar>
+          }
+          isLoading={query.isLoading}
+          errorState={
+            query.isError ? (
+              <ErrorState
+                title="Erro ao carregar leads"
+                error={query.error}
+                onRetry={() => query.refetch()}
+              />
+            ) : undefined
+          }
+          isEmpty={!query.isLoading && !query.isError && filtered.length === 0}
+          emptyState={
             <EmptyState
               icon={UserPlus}
               title="Nenhum lead"
@@ -114,24 +143,26 @@ function LeadsPage() {
                 ) : undefined
               }
             />
-          ) : (
-            <div className="overflow-hidden rounded-md border">
-              <div className="border-b px-3 py-2 text-xs text-muted-foreground">
-                Exibindo {paged.items.length} de {paged.meta?.total ?? filtered.length} leads
-                {isServerPaginated ? " (paginação do servidor)" : ""}.
-              </div>
-              <LeadsTable leads={paged.items} />
-              <TablePagination
-                page={ui.page}
-                pageSize={ui.pageSize}
-                total={paged.meta?.total ?? filtered.length}
-                totalPages={paged.meta?.totalPages}
-                onPageChange={(page) => setUi((p) => ({ ...p, page }))}
-                onPageSizeChange={(pageSize) => setUi((p) => ({ ...p, pageSize, page: 1 }))}
-              />
-            </div>
-          )}
-        </>
+          }
+          summary={
+            <>
+              Exibindo {paged.items.length} de {paged.meta?.total ?? filtered.length} leads
+              {isServerPaginated ? " (paginação do servidor)" : ""}.
+            </>
+          }
+          pagination={
+            <TablePagination
+              page={ui.page}
+              pageSize={ui.pageSize}
+              total={paged.meta?.total ?? filtered.length}
+              totalPages={paged.meta?.totalPages}
+              onPageChange={(page) => setUi((p) => ({ ...p, page }))}
+              onPageSizeChange={(pageSize) => setUi((p) => ({ ...p, pageSize, page: 1 }))}
+            />
+          }
+        >
+          <LeadsTable leads={paged.items} density={density} />
+        </DataTableShell>
       )}
     </div>
   );

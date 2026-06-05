@@ -26,6 +26,7 @@ import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { DeleteProjectDialog } from "@/components/projects/DeleteProjectDialog";
+import { PageHeader } from "@/components/layout/PageHeader";
 import type { Project, ProjectStatus } from "@/types";
 
 export const Route = createFileRoute("/_authenticated/projects")({
@@ -53,18 +54,16 @@ function ProjectsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Projetos</h1>
-          <p className="text-sm text-muted-foreground">
-            Configure projetos, atribuição e tracking key.
-          </p>
-        </div>
-        <Button onClick={onCreate} disabled={clients.length === 0}>
-          <Plus className="mr-2 h-4 w-4" /> Novo projeto
-        </Button>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Projetos"
+        description="Configure projetos, atribuição e tracking key."
+        actions={
+          <Button onClick={onCreate} disabled={clients.length === 0}>
+            <Plus className="mr-2 h-4 w-4" /> Novo projeto
+          </Button>
+        }
+      />
 
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />

@@ -14,10 +14,7 @@ export function RevenueBadge({ value, currency }: { value: number; currency?: st
         }).format(value)
       : fmt.format(value);
   return (
-    <Badge
-      variant="outline"
-      className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-mono"
-    >
+    <Badge variant="success" className="font-mono tabular-nums">
       {formatted}
     </Badge>
   );

@@ -1,11 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LogOut, User, Server, ShieldCheck, ShieldAlert } from "lucide-react";
+import {
+  LogOut,
+  User,
+  Server,
+  ShieldCheck,
+  ShieldAlert,
+  PlugZap,
+  CheckCircle2,
+} from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/providers/AuthProvider";
 import { getApiEnvironmentStatus } from "@/utils/runtime";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { SystemDiagnosticsPanel } from "@/components/diagnostics/SystemDiagnosticsPanel";
+import { E2EChecklistPanel } from "@/components/diagnostics/E2EChecklistPanel";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -31,13 +42,11 @@ function SettingsPage() {
   const healthy = env.configured && !env.mixedContent;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
-        <p className="text-sm text-muted-foreground">
-          Informações da sua conta e do ambiente da API.
-        </p>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Configurações"
+        description="Informações da sua conta e do ambiente da API."
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-3">
@@ -119,6 +128,64 @@ function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+            <PlugZap className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Contratos Backend</CardTitle>
+            <CardDescription>Endpoints suportados por esta versão do frontend.</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <Badge variant="outline">V3.4</Badge>
+            <Badge variant="outline">V3.4.2</Badge>
+          </div>
+          <ul className="grid gap-1.5 text-sm">
+            {[
+              "GET /app/bootstrap",
+              "GET /dashboard/kpis",
+              "GET /projects/:id/install",
+              "POST /projects/:id/test-event",
+              "GET /onboarding/status",
+              "GET /projects/:id/health",
+              "GET/POST/PATCH/DELETE /integrations/configs",
+            ].map((endpoint) => (
+              <li key={endpoint} className="flex items-center gap-2 text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <code className="font-mono text-xs">{endpoint}</code>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            O frontend usa fallbacks locais quando algum endpoint não responde, mantendo
+            compatibilidade com versões anteriores.
+          </p>
+        </CardContent>
+      </Card>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Diagnóstico do Sistema</h2>
+          <p className="text-sm text-muted-foreground">
+            Verifica ambiente, sessão, projeto, tracking, onboarding e integrações em tempo real.
+          </p>
+        </div>
+        <SystemDiagnosticsPanel />
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Checklist E2E</h2>
+          <p className="text-sm text-muted-foreground">
+            Roteiro guiado para validar o fluxo comercial ponta-a-ponta no produto.
+          </p>
+        </div>
+        <E2EChecklistPanel />
+      </section>
     </div>
   );
 }

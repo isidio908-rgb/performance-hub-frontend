@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -7,16 +6,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/states/EmptyState";
 import type { ConversionPath } from "@/types";
+import { densityTableClass, type TableDensity } from "@/hooks/useTableDensity";
 
 interface Props {
   data: ConversionPath[];
-  loading?: boolean;
-  title?: string;
-  description?: string;
+  density?: TableDensity;
 }
 
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(n);
@@ -38,13 +34,8 @@ function pathLabels(p: ConversionPath): string[] {
     .filter(Boolean);
 }
 
-export function ConversionPathsTable({
-  data,
-  loading,
-  title = "Caminhos de conversão",
-  description = "Sequências de toques que levaram à conversão.",
-}: Props) {
-  const rows = data
+export function normalizePathRows(data: ConversionPath[]) {
+  return data
     .map((p) => ({
       labels: pathLabels(p),
       count: Number(p.count ?? p.conversions ?? 0) || 0,
@@ -52,61 +43,39 @@ export function ConversionPathsTable({
     }))
     .filter((r) => r.labels.length > 0)
     .slice(0, 30);
+}
 
+export function ConversionPathsTable({ data, density = "comfortable" }: Props) {
+  const rows = normalizePathRows(data);
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <EmptyState
-            title="Sem caminhos de conversão"
-            description="Ainda não há jornadas de conversão registradas."
-          />
-        ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Caminho</TableHead>
-                  <TableHead className="text-right">Conversões</TableHead>
-                  <TableHead className="text-right">Receita</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <div className="flex flex-wrap items-center gap-1">
-                        {r.labels.map((l, j) => (
-                          <span key={j} className="flex items-center gap-1">
-                            <Badge variant="secondary" className="font-normal">
-                              {l}
-                            </Badge>
-                            {j < r.labels.length - 1 && (
-                              <span className="text-muted-foreground">→</span>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{fmt(r.count)}</TableCell>
-                    <TableCell className="text-right">{fmtBRL(r.revenue)}</TableCell>
-                  </TableRow>
+    <Table className={densityTableClass(density)}>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Caminho</TableHead>
+          <TableHead className="text-right">Conversões</TableHead>
+          <TableHead className="text-right">Receita</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((r, i) => (
+          <TableRow key={i}>
+            <TableCell>
+              <div className="flex flex-wrap items-center gap-1">
+                {r.labels.map((l, j) => (
+                  <span key={j} className="flex items-center gap-1">
+                    <Badge variant="secondary" className="font-normal">
+                      {l}
+                    </Badge>
+                    {j < r.labels.length - 1 && <span className="text-muted-foreground">→</span>}
+                  </span>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+            </TableCell>
+            <TableCell className="text-right tabular-nums">{fmt(r.count)}</TableCell>
+            <TableCell className="text-right tabular-nums">{fmtBRL(r.revenue)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

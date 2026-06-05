@@ -34,6 +34,8 @@ import { useProjects } from "@/hooks/useProjects";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { NextBestActionCard } from "@/components/onboarding/NextBestActionCard";
 import { buildOnboardingState, getProjectSetupProgress } from "@/utils/onboarding";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { SystemStatusSummaryCard } from "@/components/diagnostics/SystemStatusSummaryCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -54,8 +56,8 @@ function DashboardPage() {
   const currentProject = projects.find((p) => p.id === projectId) ?? null;
 
   const kpisQuery = useQuery({
-    queryKey: ["analytics", "overview", projectId],
-    queryFn: () => dashboardApi.overview(projectId!),
+    queryKey: ["dashboard", "kpis", projectId],
+    queryFn: () => dashboardApi.kpis(projectId),
     enabled: !!projectId,
     retry: 1,
   });
@@ -81,13 +83,12 @@ function DashboardPage() {
   const showOnboarding = progress < 100;
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Visão geral de performance do projeto selecionado.
-        </p>
-      </div>
+    <div className="p-4 sm:p-6">
+      <PageHeader
+        className="mb-6"
+        title="Dashboard"
+        description="Visão geral de performance do projeto selecionado."
+      />
 
       {!clients.length ? (
         <div className="space-y-4">
@@ -198,6 +199,8 @@ function DashboardPage() {
             <RevenueByChannelChart data={channelQ.data ?? []} loading={channelQ.isLoading} />
             <RevenueByCampaignTable data={campaignQ.data ?? []} loading={campaignQ.isLoading} />
           </div>
+
+          <SystemStatusSummaryCard />
         </div>
       )}
     </div>

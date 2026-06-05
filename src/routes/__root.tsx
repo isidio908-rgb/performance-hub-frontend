@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
-  Link,
   createRootRouteWithContext,
   useRouter,
   HeadContent,
@@ -15,24 +14,12 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { SelectionProvider } from "@/providers/SelectionProvider";
 import { Toaster } from "@/components/ui/sonner";
 
+import { NotFoundState } from "@/components/states/NotFoundState";
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          O endereço que você acessou não existe ou foi movido.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Voltar ao início
-          </Link>
-        </div>
-      </div>
+      <NotFoundState />
     </div>
   );
 }
@@ -78,11 +65,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Performance Hub" },
+      { name: "color-scheme", content: "dark" },
+      { title: "Performance Hub | Performify" },
       {
         name: "description",
-        content: "Plataforma de tracking, analytics e attribution.",
+        content: "Plataforma de tracking, atribuição e analytics de performance.",
       },
+      { property: "og:title", content: "Performance Hub | Performify" },
+      {
+        property: "og:description",
+        content: "Plataforma de tracking, atribuição e analytics de performance.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Performify" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -94,11 +89,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="min-h-dvh bg-background text-foreground antialiased">
         {children}
         <Scripts />
       </body>

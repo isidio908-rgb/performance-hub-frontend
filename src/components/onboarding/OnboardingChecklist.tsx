@@ -10,17 +10,55 @@ import {
   getNextSetupStep,
   getProjectSetupProgress,
   type OnboardingState,
+  type OnboardingStep,
 } from "@/utils/onboarding";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import { getNextStepRoute } from "@/api/onboarding";
 
 interface Props {
   state: OnboardingState;
   className?: string;
 }
 
+/**
+ * Mescla o estado local (derivado de clients/projects/kpis) com o status
+ * oficial do backend, quando disponível. O backend é a fonte autoritativa
+ * para hasClient/hasProject/hasTrackingKey/hasEvents.
+ */
+function mergeOnboardingState(
+  local: OnboardingState,
+  backend: ReturnType<typeof useOnboardingStatus>["data"],
+): OnboardingState {
+  if (!backend) return local;
+  return {
+    hasClient: backend.hasClients ?? local.hasClient,
+    hasProject: backend.hasProjects ?? local.hasProject,
+    hasTrackingKey: backend.hasTrackingInstalled ?? local.hasTrackingKey,
+    scriptCopied: local.scriptCopied,
+    hasEvents: backend.hasEvents ?? local.hasEvents,
+    hasLeads: local.hasLeads,
+    hasPurchases: local.hasPurchases,
+  };
+}
+
 export function OnboardingChecklist({ state, className }: Props) {
-  const steps = buildOnboardingSteps(state);
-  const progress = getProjectSetupProgress(state);
-  const next = getNextSetupStep(state);
+  const backendQ = useOnboardingStatus();
+  const merged = mergeOnboardingState(state, backendQ.data ?? null);
+  const steps = buildOnboardingSteps(merged);
+  const progress = getProjectSetupProgress(merged);
+
+  // Se o backend devolve nextStep, ele tem prioridade sobre o cálculo local
+  // — assim mensagens de "próximo passo" sempre batem com o backend.
+  const localNext = getNextSetupStep(merged);
+  const backendNextRoute = backendQ.data?.nextStep
+    ? getNextStepRoute(backendQ.data.nextStep)
+    : null;
+  const next: OnboardingStep | null = backendNextRoute
+    ? localNext
+      ? { ...localNext, to: backendNextRoute }
+      : null
+    : localNext;
+
   const allDone = progress === 100;
 
   return (
@@ -37,6 +75,11 @@ export function OnboardingChecklist({ state, className }: Props) {
             <Badge variant="outline" className="text-xs">
               {progress}%
             </Badge>
+            {backendQ.data && (
+              <Badge variant="success" className="text-[10px]">
+                sync backend
+              </Badge>
+            )}
           </div>
           <CardDescription>
             {allDone
@@ -60,9 +103,9 @@ export function OnboardingChecklist({ state, className }: Props) {
           {steps.map((step) => (
             <li key={step.id} className="flex items-center gap-3 py-2.5">
               {step.done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
               ) : (
-                <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               )}
               <div className="flex-1 min-w-0">
                 <p
