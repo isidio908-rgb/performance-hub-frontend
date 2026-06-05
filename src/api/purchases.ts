@@ -1,17 +1,40 @@
 import { api } from "./client";
-import type { Purchase } from "@/types";
+import type { Purchase, PaginatedResponse } from "@/types";
 
-type ListResponse =
-  | Purchase[]
-  | { data: Purchase[]; meta?: unknown }
-  | { items: Purchase[]; meta?: unknown };
+export interface PurchasesQueryParams {
+  projectId: string;
+  page?: number;
+  pageSize?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  minValue?: number;
+  maxValue?: number;
+  utmSource?: string;
+  utmCampaign?: string;
+}
 
 export const purchasesApi = {
-  list: (projectId: string) =>
-    api.get<ListResponse>("/analytics/purchases", { query: { projectId } }),
+  list: (params: PurchasesQueryParams) =>
+    api.get<PaginatedResponse<Purchase>>("/analytics/purchases", {
+      query: {
+        projectId: params.projectId,
+        page: params.page,
+        pageSize: params.pageSize,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
+        search: params.search,
+        minValue: params.minValue,
+        maxValue: params.maxValue,
+        utmSource: params.utmSource,
+        utmCampaign: params.utmCampaign,
+      },
+    }),
 };
 
-export function normalizePurchases(res: ListResponse | undefined): Purchase[] {
+export function normalizePurchases(
+  res: PaginatedResponse<Purchase> | undefined | null,
+): Purchase[] {
   if (!res) return [];
   if (Array.isArray(res)) return res;
   if ("data" in res && Array.isArray(res.data)) return res.data;

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Copy, Check, Globe, ArrowRight } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Copy, Check, Globe, ArrowRight, CheckCircle2, Circle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { TrackingKeyCopy } from "@/components/projects/TrackingKeyCopy";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { useSelection } from "@/providers/SelectionProvider";
+import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
 import { buildTrackerScript, getTrackerScriptUrl } from "@/utils/tracker";
+import { dashboardApi } from "@/api/dashboard";
+import { buildOnboardingState, markScriptCopied, wasScriptCopied } from "@/utils/onboarding";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/install")({
   component: InstallPage,
@@ -19,13 +25,34 @@ export const Route = createFileRoute("/_authenticated/install")({
 
 function InstallPage() {
   const { projectId } = useSelection();
+  const { clients } = useClients();
   const { projects, projectsQuery } = useProjects();
   const [copied, setCopied] = useState(false);
+  const [copiedFlag, setCopiedFlag] = useState(false);
 
   const project = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId]);
 
+  const kpisQuery = useQuery({
+    queryKey: ["analytics", "overview", projectId],
+    queryFn: () => dashboardApi.overview(projectId!),
+    enabled: !!projectId,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    setCopiedFlag(wasScriptCopied(projectId));
+  }, [projectId]);
+
   const trackerUrl = getTrackerScriptUrl();
   const script = project?.trackingKey ? buildTrackerScript(project.trackingKey) : null;
+
+  const onboardingState = buildOnboardingState({
+    clients,
+    projects,
+    currentProject: project,
+    kpis: kpisQuery.data,
+    projectId,
+  });
 
   async function copy() {
     if (!script) return;
@@ -34,6 +61,15 @@ function InstallPage() {
     toast.success("Script copiado");
     setTimeout(() => setCopied(false), 1500);
   }
+
+  function markCopied() {
+    if (!projectId) return;
+    markScriptCopied(projectId);
+    setCopiedFlag(true);
+    toast.success("Marcado como instalado");
+  }
+
+  const hasEvents = (kpisQuery.data?.events ?? 0) > 0 || (kpisQuery.data?.pageViews ?? 0) > 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -92,6 +128,33 @@ function InstallPage() {
             instalar.
           </AlertDescription>
         </Alert>
+      )}
+
+      {projectId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Status esperado</CardTitle>
+            <CardDescription>Acompanhe o progresso da instalação deste projeto.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              <StatusRow done={!!project?.trackingKey} label="Tracking key disponível" />
+              <StatusRow done={!!script} label="Script gerado" />
+              <StatusRow done={copiedFlag} label="Script copiado / instalação confirmada" />
+              <StatusRow
+                done={hasEvents}
+                pending={!hasEvents && copiedFlag}
+                label={
+                  hasEvents
+                    ? "Eventos detectados"
+                    : copiedFlag
+                      ? "Aguardando primeiro evento"
+                      : "Primeiro evento ainda não recebido"
+                }
+              />
+            </ul>
+          </CardContent>
+        </Card>
       )}
 
       <Card>
@@ -161,16 +224,77 @@ function InstallPage() {
           </Tabs>
 
           {script && (
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button onClick={copy} size="sm">
                 {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                 Copiar script
+              </Button>
+              <Button
+                onClick={markCopied}
+                size="sm"
+                variant={copiedFlag ? "outline" : "secondary"}
+                disabled={!projectId}
+              >
+                {copiedFlag ? <Check className="mr-2 h-4 w-4" /> : null}
+                {copiedFlag ? "Marcado como instalado" : "Copiei o script"}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Validação do tracker</CardTitle>
+          <CardDescription>
+            Próximos passos para confirmar que tudo está funcionando.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>
+              Script instalado no <code>&lt;head&gt;</code> do site.
+            </li>
+            <li>
+              Abra o site em uma aba anônima para gerar um <strong>PageView</strong>.
+            </li>
+            <li>
+              Verifique a chegada do evento em{" "}
+              <Link to="/events" className="text-primary underline">
+                Eventos
+              </Link>
+              .
+            </li>
+            <li>
+              Configure eventos de <strong>Lead</strong> e <strong>Purchase</strong> conforme a
+              documentação.
+            </li>
+          </ol>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/events">
+              Ir para Eventos <ArrowRight className="ml-2 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      {projectId && <OnboardingChecklist state={onboardingState} />}
     </div>
+  );
+}
+
+function StatusRow({ done, pending, label }: { done: boolean; pending?: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-2 text-sm">
+      {done ? (
+        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+      ) : pending ? (
+        <Clock className="h-4 w-4 text-amber-500" />
+      ) : (
+        <Circle className="h-4 w-4 text-muted-foreground" />
+      )}
+      <span className={cn(done ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+    </li>
   );
 }
 

@@ -173,3 +173,175 @@ export interface Purchase {
   createdAt?: string;
   [k: string]: unknown;
 }
+
+// ===== Fase 5 — Analytics avançado =====
+
+export interface RevenueTimelinePoint {
+  date?: string;
+  day?: string;
+  timestamp?: string;
+  revenue?: number;
+  total?: number;
+  purchases?: number;
+  count?: number;
+  [k: string]: unknown;
+}
+
+export interface FunnelStep {
+  name?: string;
+  label?: string;
+  type?: string;
+  count?: number;
+  value?: number;
+  conversionRate?: number;
+  [k: string]: unknown;
+}
+
+export interface FunnelSummary {
+  steps?: FunnelStep[];
+  pageViews?: number;
+  viewContent?: number;
+  addToCart?: number;
+  initiateCheckout?: number;
+  purchase?: number;
+  leads?: number;
+  conversionRate?: number;
+  [k: string]: unknown;
+}
+
+export interface RevenueByChannelItem {
+  channel?: string;
+  source?: string;
+  utmSource?: string;
+  name?: string;
+  revenue?: number;
+  total?: number;
+  purchases?: number;
+  count?: number;
+  [k: string]: unknown;
+}
+
+export interface RevenueByCampaignItem {
+  campaign?: string;
+  utmCampaign?: string;
+  name?: string;
+  source?: string;
+  channel?: string;
+  revenue?: number;
+  total?: number;
+  purchases?: number;
+  count?: number;
+  [k: string]: unknown;
+}
+
+export interface AttributionSummary {
+  model?: AttributionModel | string;
+  totalConversions?: number;
+  totalRevenue?: number;
+  channels?: Array<Record<string, unknown>>;
+  [k: string]: unknown;
+}
+
+export interface ConversionPathStep {
+  channel?: string;
+  source?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  type?: string;
+  [k: string]: unknown;
+}
+
+export interface ConversionPath {
+  id?: string;
+  path?: ConversionPathStep[] | string[];
+  steps?: ConversionPathStep[];
+  channels?: string[];
+  count?: number;
+  conversions?: number;
+  revenue?: number;
+  total?: number;
+  [k: string]: unknown;
+}
+
+export interface AssistedChannel {
+  channel?: string;
+  source?: string;
+  utmSource?: string;
+  name?: string;
+  assistedConversions?: number;
+  assisted?: number;
+  directConversions?: number;
+  direct?: number;
+  revenue?: number;
+  total?: number;
+  [k: string]: unknown;
+}
+
+// ===== Fase 5 — Integrações =====
+
+export type IntegrationProvider = "META_CAPI" | "GA4" | "GOOGLE_ADS" | "WEBHOOK" | string;
+
+export type IntegrationDeliveryStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SUCCESS"
+  | "FAILED"
+  | "RETRY"
+  | string;
+
+export interface IntegrationHealth {
+  id?: string;
+  provider?: IntegrationProvider;
+  name?: string;
+  status?: "HEALTHY" | "DEGRADED" | "DOWN" | string;
+  healthy?: boolean;
+  enabled?: boolean;
+  successCount?: number;
+  failureCount?: number;
+  pendingCount?: number;
+  lastSuccessAt?: string | null;
+  lastFailureAt?: string | null;
+  lastError?: string | null;
+  message?: string | null;
+  [k: string]: unknown;
+}
+
+export interface IntegrationDelivery {
+  id: string;
+  projectId?: string;
+  provider?: IntegrationProvider;
+  status?: IntegrationDeliveryStatus;
+  eventType?: string;
+  eventId?: string;
+  payload?: unknown;
+  response?: unknown;
+  error?: string | null;
+  attempts?: number;
+  maxAttempts?: number;
+  nextRetryAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  [k: string]: unknown;
+}
+
+// ===== Pagination (Phase 7) =====
+export interface PaginationMeta {
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  totalPages?: number;
+}
+
+export type PaginatedResponse<T> =
+  | T[]
+  | {
+      data?: T[];
+      items?: T[];
+      meta?: PaginationMeta;
+    };
+
+export interface TablePaginationState {
+  page: number;
+  pageSize: number;
+}

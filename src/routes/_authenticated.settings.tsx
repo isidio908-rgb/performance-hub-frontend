@@ -111,6 +111,12 @@ function SettingsPage() {
           />
           <Row label="Página HTTPS" value={env.httpsPage ? "Sim" : "Não"} />
           <Row label="API em HTTP" value={env.httpApi ? "Sim" : "Não"} />
+          <Separator />
+          <p className="text-xs text-muted-foreground">
+            Em produção, a API precisa estar em HTTPS. Páginas servidas em HTTPS não conseguem
+            chamar endpoints HTTP por causa de <em>mixed content</em>. Configure o backend atrás de
+            Traefik com TLS antes de publicar.
+          </p>
         </CardContent>
       </Card>
     </div>

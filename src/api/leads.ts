@@ -1,17 +1,36 @@
 import { api } from "./client";
-import type { Lead } from "@/types";
+import type { Lead, PaginatedResponse } from "@/types";
 
-type ListResponse =
-  | Lead[]
-  | { data: Lead[] }
-  | { data: Lead[]; meta?: unknown }
-  | { items: Lead[] };
+export interface LeadsQueryParams {
+  projectId: string;
+  page?: number;
+  pageSize?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+  status?: string;
+  utmSource?: string;
+  utmCampaign?: string;
+}
 
 export const leadsApi = {
-  list: (projectId: string) => api.get<ListResponse>("/analytics/leads", { query: { projectId } }),
+  list: (params: LeadsQueryParams) =>
+    api.get<PaginatedResponse<Lead>>("/analytics/leads", {
+      query: {
+        projectId: params.projectId,
+        page: params.page,
+        pageSize: params.pageSize,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
+        search: params.search,
+        status: params.status,
+        utmSource: params.utmSource,
+        utmCampaign: params.utmCampaign,
+      },
+    }),
 };
 
-export function normalizeLeads(res: ListResponse | undefined): Lead[] {
+export function normalizeLeads(res: PaginatedResponse<Lead> | undefined | null): Lead[] {
   if (!res) return [];
   if (Array.isArray(res)) return res;
   if ("data" in res && Array.isArray(res.data)) return res.data;
