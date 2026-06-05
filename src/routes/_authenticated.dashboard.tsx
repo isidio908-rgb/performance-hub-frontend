@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   DollarSign,
   Receipt,
-  Code2,
 } from "lucide-react";
 import { KpiCard } from "@/components/KpiCard";
 import { useSelection } from "@/providers/SelectionProvider";
@@ -20,7 +19,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/api/client";
 import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
-import { Button } from "@/components/ui/button";
+import {
+  useRevenueTimeline,
+  useFunnelSummary,
+  useRevenueByChannel,
+  useRevenueByCampaign,
+} from "@/hooks/useAdvancedAnalytics";
+import { RevenueTimelineChart } from "@/components/analytics/RevenueTimelineChart";
+import { FunnelSummaryCard } from "@/components/analytics/FunnelSummaryCard";
+import { RevenueByChannelChart } from "@/components/analytics/RevenueByChannelChart";
+import { RevenueByCampaignTable } from "@/components/analytics/RevenueByCampaignTable";
+import { useClients } from "@/hooks/useClients";
+import { useProjects } from "@/hooks/useProjects";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { NextBestActionCard } from "@/components/onboarding/NextBestActionCard";
+import { buildOnboardingState, getProjectSetupProgress } from "@/utils/onboarding";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -36,6 +49,9 @@ const formatCurrency = (n: number | undefined) =>
 
 function DashboardPage() {
   const { projectId, clientId } = useSelection();
+  const { clients } = useClients();
+  const { projects } = useProjects();
+  const currentProject = projects.find((p) => p.id === projectId) ?? null;
 
   const kpisQuery = useQuery({
     queryKey: ["analytics", "overview", projectId],
@@ -44,12 +60,25 @@ function DashboardPage() {
     retry: 1,
   });
 
-  const k = kpisQuery.data;
+  const timelineQ = useRevenueTimeline(projectId);
+  const funnelQ = useFunnelSummary(projectId);
+  const channelQ = useRevenueByChannel(projectId);
+  const campaignQ = useRevenueByCampaign(projectId);
 
+  const k = kpisQuery.data;
   const hasEvents = (k?.events ?? 0) > 0;
   const hasLeads = (k?.leads ?? 0) > 0;
   const hasPurchases = (k?.purchases ?? 0) > 0;
-  const showInstallCta = !hasEvents && !hasLeads && !hasPurchases;
+
+  const onboardingState = buildOnboardingState({
+    clients,
+    projects,
+    currentProject,
+    kpis: k,
+    projectId,
+  });
+  const progress = getProjectSetupProgress(onboardingState);
+  const showOnboarding = progress < 100;
 
   return (
     <div className="p-6">
@@ -60,32 +89,58 @@ function DashboardPage() {
         </p>
       </div>
 
-      {!clientId || !projectId ? (
-        <EmptySelection />
+      {!clients.length ? (
+        <div className="space-y-4">
+          <NextBestActionCard
+            title="Crie seu primeiro cliente"
+            description="Comece cadastrando o cliente que será dono dos projetos rastreados."
+            actionLabel="Criar cliente"
+            to="/clients"
+          />
+          <OnboardingChecklist state={onboardingState} />
+        </div>
+      ) : !projects.length ? (
+        <div className="space-y-4">
+          <NextBestActionCard
+            title="Crie um projeto"
+            description="Cada site ou loja vira um projeto com tracking key própria."
+            actionLabel="Criar projeto"
+            to="/projects"
+          />
+          <OnboardingChecklist state={onboardingState} />
+        </div>
+      ) : !clientId || !projectId ? (
+        <div className="space-y-4">
+          <EmptySelection />
+          <OnboardingChecklist state={onboardingState} />
+        </div>
       ) : kpisQuery.isLoading ? (
         <KpiSkeleton />
       ) : kpisQuery.isError ? (
         <ErrorState error={kpisQuery.error} />
       ) : (
-        <div className="space-y-4">
-          {showInstallCta && (
-            <Card className="border-primary/40 bg-primary/5">
-              <CardHeader className="flex flex-row items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/15">
-                  <Code2 className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-base">Nenhuma atividade ainda</CardTitle>
-                  <CardDescription>
-                    Instale o script de tracking para começar a receber eventos, leads e compras.
-                  </CardDescription>
-                </div>
-                <Button asChild size="sm">
-                  <Link to="/install">Instalar tracking</Link>
-                </Button>
-              </CardHeader>
-            </Card>
+        <div className="space-y-6">
+          {showOnboarding && <OnboardingChecklist state={onboardingState} />}
+
+          {!hasEvents && (
+            <NextBestActionCard
+              title="Instale o tracking"
+              description="Cole o script no seu site para começar a receber eventos."
+              actionLabel="Instalar tracking"
+              to="/install"
+              variant="primary"
+            />
           )}
+          {hasEvents && !hasLeads && !hasPurchases && (
+            <NextBestActionCard
+              title="Configure captura de leads e compras"
+              description="Eventos chegando! Agora dispare Lead e Purchase no seu site."
+              actionLabel="Ver eventos"
+              to="/events"
+              variant="muted"
+            />
+          )}
+
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             <KpiCard label="PageViews" value={formatNumber(k?.pageViews)} icon={Eye} to="/events" />
             <KpiCard label="Eventos" value={formatNumber(k?.events)} icon={Activity} to="/events" />
@@ -132,6 +187,16 @@ function DashboardPage() {
               icon={Receipt}
               to="/ecommerce"
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <RevenueTimelineChart data={timelineQ.data ?? []} loading={timelineQ.isLoading} />
+            <FunnelSummaryCard data={funnelQ.data ?? null} loading={funnelQ.isLoading} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <RevenueByChannelChart data={channelQ.data ?? []} loading={channelQ.isLoading} />
+            <RevenueByCampaignTable data={campaignQ.data ?? []} loading={campaignQ.isLoading} />
           </div>
         </div>
       )}
