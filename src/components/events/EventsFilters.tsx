@@ -1,5 +1,3 @@
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -7,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DateRangeFilter, type DateRange } from "@/components/filters/DateRangeFilter";
 
 export const EVENT_TYPES = [
   "PageView",
@@ -21,25 +20,17 @@ export const EVENT_TYPES = [
 
 interface Props {
   type: string;
-  search: string;
+  dateRange: DateRange;
   onTypeChange: (v: string) => void;
-  onSearchChange: (v: string) => void;
+  onDateRangeChange: (v: DateRange) => void;
 }
 
-export function EventsFilters({ type, search, onTypeChange, onSearchChange }: Props) {
+/** Slot de filtros para uso dentro de FilterBar. */
+export function EventsFilters({ type, dateRange, onTypeChange, onDateRangeChange }: Props) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <div className="relative flex-1">
-        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Buscar por URL, nome ou visitorId..."
-          className="pl-8"
-        />
-      </div>
+    <>
       <Select value={type} onValueChange={onTypeChange}>
-        <SelectTrigger className="w-full sm:w-[200px]">
+        <SelectTrigger className="h-9 w-full sm:w-[200px]" aria-label="Filtrar por tipo de evento">
           <SelectValue placeholder="Todos os tipos" />
         </SelectTrigger>
         <SelectContent>
@@ -51,6 +42,7 @@ export function EventsFilters({ type, search, onTypeChange, onSearchChange }: Pr
           ))}
         </SelectContent>
       </Select>
-    </div>
+      <DateRangeFilter value={dateRange} onChange={onDateRangeChange} />
+    </>
   );
 }

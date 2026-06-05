@@ -2,8 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useSelection } from "@/providers/SelectionProvider";
 import { usePurchases } from "@/hooks/usePurchases";
 import { usePersistedState } from "@/hooks/usePersistedState";
@@ -11,12 +9,17 @@ import { PurchasesFilters } from "@/components/purchases/PurchasesFilters";
 import { PurchasesTable } from "@/components/purchases/PurchasesTable";
 import { PurchaseSummaryCards } from "@/components/purchases/PurchaseSummaryCards";
 import { TablePagination } from "@/components/table/TablePagination";
+import { DataTableShell } from "@/components/table/DataTableShell";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { TableDensityToggle } from "@/components/table/TableDensityToggle";
+import { useTableDensity } from "@/hooks/useTableDensity";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingTable, LoadingCards } from "@/components/states/LoadingCards";
+import { LoadingCards } from "@/components/states/LoadingCards";
 import { applyDateRange, type DateRange } from "@/components/filters/DateRangeFilter";
 import { purchaseTotal } from "@/api/purchases";
 import { paginateClientSide } from "@/utils/pagination";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export const Route = createFileRoute("/_authenticated/ecommerce")({
   component: EcommercePage,
@@ -48,6 +51,7 @@ function parseNum(v: string): number | null {
 
 function EcommercePage() {
   const { projectId, clientId } = useSelection();
+  const { density } = useTableDensity();
   const [ui, setUi] = usePersistedState<PurchasesUiState>("vps_filters_purchases", DEFAULT_STATE);
 
   const { query, purchases, meta, isServerPaginated } = usePurchases(projectId, {
@@ -87,12 +91,28 @@ function EcommercePage() {
     return paginateClientSide(filtered, ui.page, ui.pageSize);
   }, [filtered, ui.page, ui.pageSize, isServerPaginated, meta]);
 
+  const activeFiltersCount =
+    (ui.search.trim() ? 1 : 0) +
+    (ui.dateRange.from || ui.dateRange.to ? 1 : 0) +
+    (ui.minValue ? 1 : 0) +
+    (ui.maxValue ? 1 : 0);
+
+  const clearFilters = () =>
+    setUi((p) => ({
+      ...p,
+      search: "",
+      dateRange: { from: null, to: null },
+      minValue: "",
+      maxValue: "",
+      page: 1,
+    }));
+
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">E-commerce</h1>
-        <p className="text-sm text-muted-foreground">Compras, receita e ticket médio do projeto.</p>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Compras"
+        description="Compras, receita e ticket médio do projeto (e-commerce)."
+      />
 
       {!clientId || !projectId ? (
         <EmptyState
@@ -114,83 +134,66 @@ function EcommercePage() {
           )}
 
           {!query.isError && (
-            <>
-              <PurchasesFilters
-                search={ui.search}
-                dateRange={ui.dateRange}
-                onSearchChange={(v) => setUi((p) => ({ ...p, search: v, page: 1 }))}
-                onDateRangeChange={(v) => setUi((p) => ({ ...p, dateRange: v, page: 1 }))}
-              />
-              <div className="flex flex-col gap-2 rounded-md border bg-card/40 p-3 sm:flex-row sm:items-end">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Valor mínimo</Label>
-                  <Input
-                    value={ui.minValue}
-                    onChange={(e) => setUi((p) => ({ ...p, minValue: e.target.value, page: 1 }))}
-                    placeholder="0"
-                    inputMode="decimal"
-                    className="h-9 w-[140px]"
+            <DataTableShell
+              toolbar={
+                <FilterBar
+                  rightSlot={<TableDensityToggle />}
+                  search={ui.search}
+                  onSearchChange={(v) => setUi((p) => ({ ...p, search: v, page: 1 }))}
+                  searchPlaceholder="Buscar compra por pedido ou visitante…"
+                  searchAriaLabel="Buscar compras"
+                  activeFiltersCount={activeFiltersCount}
+                  onClearFilters={clearFilters}
+                >
+                  <PurchasesFilters
+                    dateRange={ui.dateRange}
+                    minValue={ui.minValue}
+                    maxValue={ui.maxValue}
+                    onDateRangeChange={(v) => setUi((p) => ({ ...p, dateRange: v, page: 1 }))}
+                    onMinValueChange={(v) => setUi((p) => ({ ...p, minValue: v, page: 1 }))}
+                    onMaxValueChange={(v) => setUi((p) => ({ ...p, maxValue: v, page: 1 }))}
                   />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Valor máximo</Label>
-                  <Input
-                    value={ui.maxValue}
-                    onChange={(e) => setUi((p) => ({ ...p, maxValue: e.target.value, page: 1 }))}
-                    placeholder="∞"
-                    inputMode="decimal"
-                    className="h-9 w-[140px]"
-                  />
-                </div>
-                {(ui.minValue || ui.maxValue) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setUi((p) => ({ ...p, minValue: "", maxValue: "", page: 1 }))}
-                    className="sm:ml-auto"
-                  >
-                    Limpar valor
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-
-          {query.isLoading ? (
-            <LoadingTable />
-          ) : query.isError ? null : filtered.length === 0 ? (
-            <EmptyState
-              icon={ShoppingCart}
-              title="Nenhuma compra"
-              description={
-                purchases.length === 0
-                  ? "Este projeto ainda não registrou compras. Instale o tracking para capturar eventos Purchase."
-                  : "Nenhuma compra corresponde aos filtros atuais."
+                </FilterBar>
               }
-              action={
-                purchases.length === 0 ? (
-                  <Button asChild size="sm">
-                    <Link to="/install">Instalar tracking</Link>
-                  </Button>
-                ) : undefined
+              isLoading={query.isLoading}
+              isEmpty={!query.isLoading && !query.isError && filtered.length === 0}
+              emptyState={
+                <EmptyState
+                  icon={ShoppingCart}
+                  title="Nenhuma compra"
+                  description={
+                    purchases.length === 0
+                      ? "Este projeto ainda não registrou compras. Instale o tracking para capturar eventos Purchase."
+                      : "Nenhuma compra corresponde aos filtros atuais."
+                  }
+                  action={
+                    purchases.length === 0 ? (
+                      <Button asChild size="sm">
+                        <Link to="/install">Instalar tracking</Link>
+                      </Button>
+                    ) : undefined
+                  }
+                />
               }
-            />
-          ) : (
-            <div className="overflow-hidden rounded-md border">
-              <div className="border-b px-3 py-2 text-xs text-muted-foreground">
-                Exibindo {paged.items.length} de {paged.meta?.total ?? filtered.length} compras
-                {isServerPaginated ? " (paginação do servidor)" : ""}.
-              </div>
-              <PurchasesTable purchases={paged.items} />
-              <TablePagination
-                page={ui.page}
-                pageSize={ui.pageSize}
-                total={paged.meta?.total ?? filtered.length}
-                totalPages={paged.meta?.totalPages}
-                onPageChange={(page) => setUi((p) => ({ ...p, page }))}
-                onPageSizeChange={(pageSize) => setUi((p) => ({ ...p, pageSize, page: 1 }))}
-              />
-            </div>
+              summary={
+                <>
+                  Exibindo {paged.items.length} de {paged.meta?.total ?? filtered.length} compras
+                  {isServerPaginated ? " (paginação do servidor)" : ""}.
+                </>
+              }
+              pagination={
+                <TablePagination
+                  page={ui.page}
+                  pageSize={ui.pageSize}
+                  total={paged.meta?.total ?? filtered.length}
+                  totalPages={paged.meta?.totalPages}
+                  onPageChange={(page) => setUi((p) => ({ ...p, page }))}
+                  onPageSizeChange={(pageSize) => setUi((p) => ({ ...p, pageSize, page: 1 }))}
+                />
+              }
+            >
+              <PurchasesTable purchases={paged.items} density={density} />
+            </DataTableShell>
           )}
         </>
       )}

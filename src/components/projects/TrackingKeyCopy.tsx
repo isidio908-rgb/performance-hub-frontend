@@ -19,11 +19,18 @@ export function TrackingKeyCopy({ trackingKey }: { trackingKey?: string }) {
   }
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-md border bg-muted/40 py-0.5 pl-2 pr-1 font-mono text-xs">
-      <KeyRound className="h-3 w-3 text-muted-foreground" />
+    <div className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 py-1 pl-2 pr-1 font-mono text-xs">
+      <KeyRound className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
       <span className="max-w-[180px] truncate">{trackingKey}</span>
-      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy}>
-        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={handleCopy}
+        aria-label={copied ? "Tracking key copiada" : "Copiar tracking key"}
+      >
+        {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
       </Button>
     </div>
   );

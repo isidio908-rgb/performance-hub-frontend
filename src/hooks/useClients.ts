@@ -19,7 +19,11 @@ export function useClients() {
 
   const clients = useMemo(() => normalize(clientsQuery.data), [clientsQuery.data]);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["clients"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["clients"] });
+    qc.invalidateQueries({ queryKey: ["app", "bootstrap"] });
+    qc.invalidateQueries({ queryKey: ["onboarding", "status"] });
+  };
 
   const createClient = useMutation({
     mutationFn: (input: CreateClientInput) => clientsApi.create(input),

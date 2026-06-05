@@ -18,6 +18,7 @@ import { ApiEnvironmentAlert } from "@/components/ApiEnvironmentAlert";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { ClientCard } from "@/components/clients/ClientCard";
 import { DeleteClientDialog } from "@/components/clients/DeleteClientDialog";
+import { PageHeader } from "@/components/layout/PageHeader";
 import type { Client } from "@/types";
 
 export const Route = createFileRoute("/_authenticated/clients")({
@@ -38,16 +39,16 @@ function ClientsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-sm text-muted-foreground">Gerencie os clientes e seus projetos.</p>
-        </div>
-        <Button onClick={onCreate}>
-          <Plus className="mr-2 h-4 w-4" /> Novo cliente
-        </Button>
-      </div>
+    <div className="space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Clientes"
+        description="Gerencie os clientes e seus projetos."
+        actions={
+          <Button onClick={onCreate}>
+            <Plus className="mr-2 h-4 w-4" /> Novo cliente
+          </Button>
+        }
+      />
 
       {clientsQuery.isError && <ApiEnvironmentAlert error={clientsQuery.error} />}
 

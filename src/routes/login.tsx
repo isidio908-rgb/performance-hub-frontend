@@ -60,20 +60,43 @@ function LoginPage() {
   return (
     <div
       suppressHydrationWarning
-      className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/40 p-4"
+      className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background p-4"
     >
-      <div className="w-full max-w-md space-y-4">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-primary/20 opacity-40 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-[400px] w-[400px] translate-y-1/3 rounded-full bg-chart-5/10 opacity-30 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            color: "var(--color-foreground)",
+            maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+          }}
+        />
+      </div>
+
+      <div className="w-full max-w-md space-y-5">
         <ApiEnvironmentAlert />
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+        <div className="mb-6 flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold text-lg shadow-lg shadow-primary/25 ring-1 ring-inset ring-white/10">
             P
           </div>
-          <span className="text-xl font-semibold tracking-tight">Performance Hub</span>
+          <div className="flex flex-col items-center text-center">
+            <span className="text-xl font-semibold tracking-tight">Performance Hub</span>
+            <span className="text-xs text-muted-foreground">
+              by Performify · Tracking, atribuição e analytics
+            </span>
+          </div>
         </div>
-        <Card className="border-border/60 shadow-lg">
-          <CardHeader>
-            <CardTitle>Entrar</CardTitle>
-            <CardDescription>Acesse o painel da plataforma.</CardDescription>
+        <Card className="border-border/60 bg-card/60 backdrop-blur-xl shadow-2xl shadow-black/20">
+          <CardHeader className="space-y-1.5">
+            <CardTitle className="text-xl">Entrar na sua conta</CardTitle>
+            <CardDescription>
+              Acesse o painel para acompanhar suas métricas em tempo real.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,13 +126,16 @@ function LoginPage() {
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
+                {submitting ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </CardContent>
         </Card>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          API: <code className="font-mono">{import.meta.env.VITE_API_BASE_URL}</code>
+        <p className="text-center text-[11px] text-muted-foreground">
+          API ·{" "}
+          <code className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[10px]">
+            {import.meta.env.VITE_API_BASE_URL}
+          </code>
         </p>
       </div>
     </div>

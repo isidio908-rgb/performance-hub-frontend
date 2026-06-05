@@ -25,6 +25,9 @@ export function useProjects() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["projects"] });
     qc.invalidateQueries({ queryKey: ["analytics"] });
+    qc.invalidateQueries({ queryKey: ["dashboard", "kpis"] });
+    qc.invalidateQueries({ queryKey: ["app", "bootstrap"] });
+    qc.invalidateQueries({ queryKey: ["onboarding", "status"] });
   };
 
   const createProject = useMutation({

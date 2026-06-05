@@ -1,51 +1,61 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface IntegrationFilterValues {
   provider: string;
   status: string;
 }
 
+const PROVIDERS = ["META_PIXEL", "META_CAPI", "GOOGLE_ADS", "GA4", "WEBHOOK", "CUSTOM"] as const;
+
+const STATUSES = ["PENDING", "DELIVERED", "FAILED", "RETRY"] as const;
+
 interface Props {
   value: IntegrationFilterValues;
   onChange: (v: IntegrationFilterValues) => void;
 }
 
+/** Slot de filtros de integrações para uso dentro de FilterBar. */
 export function IntegrationFilters({ value, onChange }: Props) {
-  const hasFilter = !!value.provider || !!value.status;
   return (
-    <div className="flex flex-col gap-2 rounded-md border bg-card p-3 sm:flex-row sm:items-end">
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Provider</Label>
-        <Input
-          value={value.provider}
-          onChange={(e) => onChange({ ...value, provider: e.target.value })}
-          placeholder="META_CAPI, GA4, ..."
-          className="h-9 w-[200px]"
-        />
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Status</Label>
-        <Input
-          value={value.status}
-          onChange={(e) => onChange({ ...value, status: e.target.value })}
-          placeholder="PENDING, FAILED, ..."
-          className="h-9 w-[200px]"
-        />
-      </div>
-      {hasFilter && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onChange({ provider: "", status: "" })}
-          className="sm:ml-auto"
-        >
-          <X className="mr-1 h-3 w-3" />
-          Limpar
-        </Button>
-      )}
-    </div>
+    <>
+      <Select
+        value={value.provider || "__all"}
+        onValueChange={(v) => onChange({ ...value, provider: v === "__all" ? "" : v })}
+      >
+        <SelectTrigger className="h-9 w-full sm:w-[200px]" aria-label="Filtrar por provider">
+          <SelectValue placeholder="Todos os providers" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all">Todos os providers</SelectItem>
+          {PROVIDERS.map((p) => (
+            <SelectItem key={p} value={p}>
+              {p}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        value={value.status || "__all"}
+        onValueChange={(v) => onChange({ ...value, status: v === "__all" ? "" : v })}
+      >
+        <SelectTrigger className="h-9 w-full sm:w-[180px]" aria-label="Filtrar por status">
+          <SelectValue placeholder="Todos os status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all">Todos os status</SelectItem>
+          {STATUSES.map((s) => (
+            <SelectItem key={s} value={s}>
+              {s}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
   );
 }
